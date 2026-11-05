@@ -1,0 +1,24 @@
+display_information:
+  name: Academy Bot 
+  description: MakeSense Slack Academy training app
+features:
+  bot_user:
+    display_name: Academy Bot 
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - channels:history
+      - chat:write
+      - chat:write.public
+      - users:read
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
