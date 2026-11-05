@@ -225,3 +225,5 @@ __marimo__/
 
 .venv/
 __pycache__/
+
+channels.csv
