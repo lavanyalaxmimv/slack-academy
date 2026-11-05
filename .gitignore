@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.env
+.sf/
+.sfdx/
+
+.venv/
+__pycache__/
