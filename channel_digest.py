@@ -13,15 +13,20 @@ CHANNEL_ID = os.environ["DIGEST_CHANNEL_ID"]
 def count_messages_last_24h(channel_id):
     oldest = time.time() - 24 * 60 * 60
     counts = {}
+    fetched = 0
+    skipped = 0
     for page in client.conversations_history(
         channel=channel_id, oldest=str(oldest), limit=100
     ):
         for msg in page["messages"]:
+            fetched += 1
             if msg.get("bot_id") or msg.get("subtype"):
+                skipped += 1
                 continue  # skip bots and system messages
             user = msg.get("user")
             if user:
                 counts[user] = counts.get(user, 0) + 1
+    print(f"Fetched {fetched} messages, skipped {skipped} bot/system")
     return counts
 
 
