@@ -52,6 +52,43 @@ def order_status(message, context, say):
             text=f"Sorry, I couldn't find order #{order_id}. Please check the number and try again.",
             thread_ts=thread_ts,
         )
+ESCALATIONS_ID = os.environ["ESCALATIONS_CHANNEL_ID"]
+seen_events = set()
+
+
+@app.event("reaction_added")
+def escalate(event, body, client):
+    if event["reaction"] != "rotating_light":
+        return
+    item = event["item"]
+    if item["type"] != "message":
+        return
+
+    event_id = body["event_id"]
+    if event_id in seen_events:
+        print("Duplicate event ignored")
+        return
+    seen_events.add(event_id)
+
+    channel = item["channel"]
+    ts = item["ts"]
+    reporter = event["user"]
+    try:
+        permalink = client.chat_getPermalink(channel=channel, message_ts=ts)["permalink"]
+        history = client.conversations_history(
+            channel=channel, latest=ts, inclusive=True, limit=1
+        )
+        author = history["messages"][0].get("user", "unknown")
+        client.chat_postMessage(
+            channel=ESCALATIONS_ID,
+            text=(
+                f":rotating_light: Escalation raised by <@{reporter}> "
+                f"on a message from <@{author}>\n{permalink}"
+            ),
+        )
+        print("Escalation posted")
+    except SlackApiError as e:
+        print("Escalation failed:", e.response["error"])
         
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
