@@ -1,3 +1,4 @@
+import re
 import os
 from dotenv import load_dotenv
 from slack_bolt import App
@@ -31,6 +32,26 @@ def welcome_new_member(event, client, context):
     except SlackApiError as e:
         print("Could not send DM:", e.response["error"])
 
+ORDERS = {
+    "1001": "Packed, dispatching today",
+    "1002": "In transit, due Monday",
+    "1003": "Delivered on 4 Nov",
+}
 
+@app.message(re.compile(r"order #(\d+)", re.IGNORECASE))
+def order_status(message, context, say):
+    if message.get("bot_id"):
+        return
+    order_id = context["matches"][0]
+    status = ORDERS.get(order_id)
+    thread_ts = message.get("thread_ts") or message["ts"]
+    if status:
+        say(text=f"Order #{order_id}: {status}", thread_ts=thread_ts)
+    else:
+        say(
+            text=f"Sorry, I couldn't find order #{order_id}. Please check the number and try again.",
+            thread_ts=thread_ts,
+        )
+        
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
