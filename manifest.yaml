@@ -4,7 +4,7 @@ display_information:
   background_color: "#1B1A66"
 features:
   slash_commands:
-    - command: /order-status
+    - command: /order-status-lm
       description: Look up an order
       usage_hint: "<order id>"
       should_escape: false
