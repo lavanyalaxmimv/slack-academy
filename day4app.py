@@ -61,7 +61,99 @@ def order_status(ack, command, respond):
         respond(f"Sorry, I couldn't find order #{order_id}. Please check the number and try again.")
         return
     respond(blocks=order_blocks(order), text=f"Order #{order.order_id}: {order.status}")
+NEW_MANAGERS_CHANNEL_ID = os.environ["NEW_MANAGERS_CHANNEL_ID"]
+MANAGER_IDS = {m.strip() for m in os.environ["MANAGER_IDS"].split(",") if m.strip()}
 
+
+def request_blocks(requester: str, details: str) -> list[dict]:
+    return [
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Leave request* from <@{requester}>\n{details}"},
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Approve"},
+                    "style": "primary",
+                    "action_id": "leave_approve",
+                    "value": requester,
+                },
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Reject"},
+                    "style": "danger",
+                    "action_id": "leave_reject",
+                    "value": requester,
+                },
+            ],
+        },
+    ]
+
+
+@app.command("/leave-request")
+def leave_request(ack, command, client, respond):
+    ack()
+    details = command["text"].strip()
+    if not details:
+        respond("Please add your dates and reason, for example: /leave-request 12-13 Nov, family function")
+        return
+    requester = command["user_id"]
+    client.chat_postMessage(
+        channel=NEW_MANAGERS_CHANNEL_ID,
+        text=f"Leave request from <@{requester}>: {details}",
+        blocks=request_blocks(requester, details),
+    )
+    respond("Your leave request has been sent to the managers.")
+
+
+def decide(ack, body, client, respond, action, approved: bool):
+    ack()
+    manager = body["user"]["id"]
+    requester = action["value"]
+
+    if manager not in MANAGER_IDS:
+        respond(
+            text="Sorry, only listed managers can approve or reject leave requests.",
+            replace_original=False,
+            response_type="ephemeral",
+        )
+        return
+
+    blocks = body["message"]["blocks"]
+    if not any(b["type"] == "actions" for b in blocks):
+        return  # already decided by another manager
+
+    verdict = "Approved" if approved else "Rejected"
+    emoji = ":white_check_mark:" if approved else ":x:"
+    client.chat_update(
+        channel=body["channel"]["id"],
+        ts=body["message"]["ts"],
+        text=f"Leave request {verdict.lower()}",
+        blocks=[
+            blocks[0],
+            {
+                "type": "context",
+                "elements": [{"type": "mrkdwn", "text": f"{emoji} *{verdict}* by <@{manager}>"}],
+            },
+        ],
+    )
+    client.chat_postMessage(
+        channel=requester,
+        text=f"Your leave request was {verdict.lower()} by <@{manager}>.",
+    )
+
+
+@app.action("leave_approve")
+def approve(ack, body, client, respond, action):
+    decide(ack, body, client, respond, action, True)
+
+
+@app.action("leave_reject")
+def reject(ack, body, client, respond, action):
+    decide(ack, body, client, respond, action, False)
 
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
