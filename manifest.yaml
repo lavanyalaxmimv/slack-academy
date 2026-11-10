@@ -1,18 +1,45 @@
 display_information:
-  name: Academy Bot 
-  description: MakeSense Slack Academy training app
+  name: Academy Bot
+  description: MakeSense Slack Academy training bot
+  background_color: "#1B1A66"
 features:
+  slash_commands:
+    - command: /order-status
+      description: Look up an order
+      usage_hint: "<order id>"
+      should_escape: false
+    - command: /leave-request
+      description: Request leave
+      should_escape: false
+  shortcuts:
+    - name: Create task from message
+      type: message
+      callback_id: create_task
+      description: Save this message as a task
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+    agent_tasks_enabled: true
   bot_user:
-    display_name: Academy Bot 
+    display_name: Academy Bot
     always_online: true
 oauth_config:
   scopes:
     bot:
+      - commands
+      - reactions:read
       - app_mentions:read
       - channels:history
+      - channels:join
+      - channels:read
       - chat:write
       - chat:write.public
+      - files:write
+      - groups:history
+      - groups:read
       - users:read
+  pkce_enabled: false
 settings:
   event_subscriptions:
     bot_events:
@@ -24,4 +51,6 @@ settings:
     is_enabled: true
   org_deploy_enabled: false
   socket_mode_enabled: true
+  is_mcp_enabled: false
   token_rotation_enabled: false
+  app_level_token_rotation_enabled: false
