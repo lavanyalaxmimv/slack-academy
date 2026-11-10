@@ -1,3 +1,6 @@
+import json
+from datetime import datetime, timezone
+from slack_sdk.errors import SlackApiError
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -154,6 +157,60 @@ def approve(ack, body, client, respond, action):
 @app.action("leave_reject")
 def reject(ack, body, client, respond, action):
     decide(ack, body, client, respond, action, False)
+TASKS_FILE = "tasks.json"
 
+
+def load_tasks() -> list[dict]:
+    try:
+        with open(TASKS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        print("tasks.json is not valid JSON, starting a new list")
+        return []
+
+
+def save_tasks(tasks: list[dict]) -> None:
+    with open(TASKS_FILE, "w", encoding="utf-8") as f:
+        json.dump(tasks, f, indent=2, ensure_ascii=False)
+
+
+@app.shortcut("create_task")
+def create_task(ack, shortcut, client):
+    ack()
+    message = shortcut["message"]
+    channel_id = shortcut["channel"]["id"]
+    user_id = shortcut["user"]["id"]
+
+    try:
+        permalink = client.chat_getPermalink(
+            channel=channel_id, message_ts=message["ts"]
+        )["permalink"]
+    except SlackApiError as e:
+        print("Could not get permalink:", e.response["error"])
+        permalink = ""
+
+    tasks = load_tasks()
+    task = {
+        "id": len(tasks) + 1,
+        "text": message.get("text", ""),
+        "author": message.get("user", "unknown"),
+        "created_by": user_id,
+        "permalink": permalink,
+        "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    tasks.append(task)
+    save_tasks(tasks)
+    print(f"Task {task['id']} saved")
+
+    try:
+        client.chat_postEphemeral(
+            channel=channel_id,
+            user=user_id,
+            text=f"Task #{task['id']} created from that message.",
+        )
+    except SlackApiError:
+        pass  # the confirmation is optional if the bot is not in the channel
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
