@@ -20,10 +20,11 @@ def order_status(ack, command, respond):
 
 
 def leave_request(ack, command, client, respond):
+    print("leave_request called")
     ack()
     details = command["text"].strip()
     if not details:
-        respond("Please add your dates and reason, for example: /leave-request 12-13 Nov, family function")
+        respond("Please add your dates and reason, for example: /leave-request-lm 12-13 Nov, family function")
         return
     requester = command["user_id"]
     client.chat_postMessage(
@@ -36,4 +37,4 @@ def leave_request(ack, command, client, respond):
 
 def register(app):
     app.command("/order-status-lm")(order_status)
-    app.command("/leave-request")(leave_request)
+    app.command("/leave-request-lm")(leave_request)
