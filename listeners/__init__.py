@@ -1,4 +1,4 @@
-from . import actions, commands, discount,home, shortcuts
+from . import actions, commands, discount, functions, home, orderflow, shortcuts,accounts
 
 
 def register_listeners(app):
@@ -7,3 +7,6 @@ def register_listeners(app):
     shortcuts.register(app)
     discount.register(app)
     home.register(app)
+    orderflow.register(app)
+    functions.register(app)
+    accounts.register(app)
