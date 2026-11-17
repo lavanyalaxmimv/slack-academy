@@ -2,28 +2,39 @@ display_information:
   name: Academy Bot
   description: MakeSense Slack Academy training bot
   background_color: "#1B1A66"
+  
 features:
-  slash_commands:
-    - command: /order-status-lm
-      description: Look up an order
-      usage_hint: "<order id>"
-      should_escape: false
-    - command: /leave-request
-      description: Request leave
-      should_escape: false
-  shortcuts:
-    - name: Create task from message
-      type: message
-      callback_id: create_task
-      description: Save this message as a task
   app_home:
-    home_tab_enabled: false
+    home_tab_enabled: true
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
     agent_tasks_enabled: true
   bot_user:
     display_name: Academy Bot
     always_online: true
+  shortcuts:
+    - name: Create task from message
+      type: message
+      callback_id: create_task
+      description: Save this message as a task
+  slash_commands:
+    - command: /order-status-lm
+      description: Look up an order
+      should_escape: false
+      usage_hint: <order id>
+    - command: /leave-request-lm
+      description: Request leave
+      should_escape: false
+    - command: /discount-lm
+      description: Request a discount approval
+      should_escape: false
+    - command: /new-order-lm
+      description: Start a multi-step order
+      should_escape: false
+    - command: /account-lm
+      description: Look up a Salesforce account
+      should_escape: false
+      usage_hint: <account name>
 oauth_config:
   scopes:
     bot:
@@ -47,6 +58,7 @@ settings:
       - member_joined_channel
       - message.channels
       - reaction_added
+      - app_home_opened
   interactivity:
     is_enabled: true
   org_deploy_enabled: false
